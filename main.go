@@ -1,0 +1,7 @@
+package goskeleton
+
+
+
+func main() {
+
+}
