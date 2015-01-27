@@ -48,16 +48,16 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface {}) fun
 
 				if formValue != nil {
 					newForm := reflect.New(reflect.TypeOf(formValue))
-					fmt.Println("newForm.Interface()", newForm.Interface())
+//					fmt.Println("newForm.Interface()", newForm.Interface())
 //					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
 					newForm.Elem().Set(reflect.ValueOf(formValue))
 
 					if c.Bind(newForm.Interface()) {
-						fmt.Println("c.Bind succeed")
+//						fmt.Println("c.Bind succeed")
 
 						injector.Map(newForm.Elem().Interface())
 					} else {
-						fmt.Println("c.Bind failed")
+//						fmt.Println("c.Bind failed")
 
 					}
 
