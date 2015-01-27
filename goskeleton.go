@@ -3,20 +3,27 @@ package goskeleton
 import (
 	"github.com/gin-gonic/gin"
 	"strings"
+	"github.com/codegangsta/inject"
 )
 
 
 
 
 
-
-func New(groups map[string]GroupDefine, ctx interface {}, ctxFilePath string) (*gin.Engine){
-
-
-	LoadDataFromFile(ctx, ctxFilePath)
+func New(groups map[string]GroupDefine, ctx interface {}, ctxFilePath string, middlewares ... gin.HandlerFunc) (*Engine) {
 
 
-	g := gin.Default()
+	e := Engine {}
+	e.Engine = gin.Default()
+	e.Injector = inject.New()
+
+	LoadDataFromFile(e.Injector, ctx, ctxFilePath)
+
+
+	middlewares = append(middlewares, injectorHandler(e.Injector))
+
+	// 安装中间件
+	e.Engine.Use(middlewares...)
 
 	//
 	// 初始化定义的路由器
@@ -24,17 +31,22 @@ func New(groups map[string]GroupDefine, ctx interface {}, ctxFilePath string) (*
 	for prefix, groupDefine := range groups {
 		if strings.TrimSpace(prefix)  == "" || strings.TrimSpace(prefix) == "/" {
 			for _, route := range groupDefine.Routes {
-				g.GET(route.Pattern, route.Handler)
-				g.POST(route.Pattern, route.Handler)
+
+
+				customHandler := wrapperCustomHandler(route.Handler, route.Form)
+				e.GET(route.Pattern, customHandler )
+				e.POST(route.Pattern, customHandler )
 			}
 		} else {
-			group := g.Group(prefix, groupDefine.Middlwares...)
+			group := e.Group(prefix, groupDefine.Middlwares...)
 			for _, route := range groupDefine.Routes {
-				group.GET(route.Pattern, route.Handler)
-				group.POST(route.Pattern, route.Handler)
+
+				customHandler := wrapperCustomHandler(route.Handler, route.Form)
+				group.GET(route.Pattern, customHandler )
+				group.POST(route.Pattern, customHandler )
 			}
 		}
 	}
 
-	return g
+	return &e
 }

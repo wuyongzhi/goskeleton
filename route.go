@@ -4,8 +4,9 @@ import "github.com/gin-gonic/gin"
 
 type Route struct {
 	Pattern string
+	Handler interface {}
 	Form    interface{}
-	Handler gin.HandlerFunc
+	Middlwares []gin.HandlerFunc
 	Intro   string
 
 }

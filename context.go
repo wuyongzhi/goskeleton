@@ -5,8 +5,14 @@ import (
 	"github.com/codegangsta/inject"
 	"github.com/BurntSushi/toml"
 	"fmt"
+	"github.com/gin-gonic/gin"
 )
 
+
+type Engine struct {
+	*gin.Engine
+	Injector inject.Injector
+}
 
 
 func isStruct(t reflect.Type) bool {
@@ -71,7 +77,7 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 
 
 
-func LoadDataFromFile(data interface {}, ctxFilePath string) {
+func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath string) {
 
 	if data == nil {
 		return
@@ -82,13 +88,6 @@ func LoadDataFromFile(data interface {}, ctxFilePath string) {
 		fmt.Println("Error:", err)
 		return
 	}
-
-	//
-	//	map 根对象
-	//
-	injector := inject.New()
-
-
 
 	ctxValue := reflect.ValueOf(data)
 	for ctxValue.Kind() == reflect.Ptr {
