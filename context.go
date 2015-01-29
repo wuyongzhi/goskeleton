@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"github.com/codegangsta/inject"
 	"github.com/BurntSushi/toml"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"git.oschina.net/zuobao/gozuobao/logger"
 )
@@ -86,12 +85,9 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 
 	_, err := toml.DecodeFile(ctxFilePath, data)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return err
 	}
 
-
-	fmt.Println("Check ContextPostLoad ")
 	postLoad, ok := data.(ContextPostLoad)
 	if ok {
 		postLoad.PostLoad()
@@ -118,8 +114,6 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 				injector.Map(fieldValue.Interface())
 			} else if fieldType.Kind() == reflect.Interface {
 				t := ctxType.Field(fieldIndex).Type
-				logger.Infoln("Found Interface", t.Name())
-
 				injector.Set(t, fieldValue)
 			}
 		}
@@ -132,7 +126,7 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 	//
 	err = recursiveInject(injector, data)
 	if err != nil {
-		fmt.Println("recursiveInject error:", err)
+		logger.Println("recursiveInject error:", err)
 	}
 
 	return err
