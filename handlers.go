@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"bytes"
+	"log"
 )
 
 const (
@@ -61,13 +62,17 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface {}) fun
 //					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
 					newForm.Elem().Set(reflect.ValueOf(formValue))
 
+					if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
+						c.Request.ParseMultipartForm(2 << 20)
+						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
+					}
+
 					if c.Bind(newForm.Interface()) {
 //						fmt.Println("c.Bind succeed")
 
 						injector.Map(newForm.Elem().Interface())
 					} else {
-//						fmt.Println("c.Bind failed")
-
+						log.Println("c.Bind failed")
 					}
 
 				}
