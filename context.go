@@ -6,6 +6,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"git.oschina.net/zuobao/gozuobao/logger"
 )
 
 
@@ -37,6 +38,7 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 	var err error
 	err = injector.Apply(value)
 	if err != nil {
+		logger.Errorln("injector.Apply error ")
 		return err
 	}
 
@@ -45,7 +47,6 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
-
 	}
 
 	if v.Kind() != reflect.Struct {
@@ -76,24 +77,36 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 }
 
 
+type ContextPostLoad interface {
+ 	PostLoad()
+}
 
 
-
-func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath string) {
-
-	if data == nil {
-		return
-	}
+func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath string) error  {
 
 	_, err := toml.DecodeFile(ctxFilePath, data)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		return err
+	}
+
+
+	fmt.Println("Check ContextPostLoad ")
+	postLoad, ok := data.(ContextPostLoad)
+	if ok {
+		postLoad.PostLoad()
 	}
 
 	ctxValue := reflect.ValueOf(data)
+	ctxType := reflect.TypeOf(data)
+
+
 	for ctxValue.Kind() == reflect.Ptr {
 		ctxValue = ctxValue.Elem()
+	}
+
+	for ctxType.Kind() == reflect.Ptr {
+		ctxType = ctxType.Elem()
 	}
 
 	if ctxValue.Kind() == reflect.Struct {
@@ -101,8 +114,13 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 			fieldValue := ctxValue.Field(fieldIndex)
 			fieldType := fieldValue.Type()
 
-			if isStruct(fieldType)  {
+			if isStruct(fieldType)   {
 				injector.Map(fieldValue.Interface())
+			} else if fieldType.Kind() == reflect.Interface {
+				t := ctxType.Field(fieldIndex).Type
+				logger.Infoln("Found Interface", t.Name())
+
+				injector.Set(t, fieldValue)
 			}
 		}
 	}
@@ -116,5 +134,7 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 	if err != nil {
 		fmt.Println("recursiveInject error:", err)
 	}
+
+	return err
 
 }
