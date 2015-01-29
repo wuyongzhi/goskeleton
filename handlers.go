@@ -14,6 +14,15 @@ const (
 	CTX_KEY_REQUEST_INJECTOR = "REQUEST_INJECTOR"
 )
 
+func GetInjector(c *gin.Context) inject.Injector {
+	var injector inject.Injector
+	requestInjector, err := c.Get(CTX_KEY_REQUEST_INJECTOR)
+	if err == nil && requestInjector != nil {
+		injector = requestInjector.(inject.Injector)
+	}
+	return injector
+}
+
 //
 // 将 injector 注入至 当前请求的 gin.Context 中
 //

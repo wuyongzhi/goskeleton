@@ -20,9 +20,8 @@ func New(groups map[string]GroupDefine, ctx interface {}, ctxFilePath string, mi
 	LoadDataFromFile(e.Injector, ctx, ctxFilePath)
 
 
-	middlewares = append(middlewares, injectorHandler(e.Injector))
-
 	// 安装中间件
+	e.Engine.Use(injectorHandler(e.Injector))
 	e.Engine.Use(middlewares...)
 
 	//
