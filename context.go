@@ -126,7 +126,7 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 	//
 	err = recursiveInject(injector, data)
 	if err != nil {
-		logger.Println("recursiveInject error:", err)
+		logger.Errorln("recursiveInject error:", err)
 	}
 
 	return err
