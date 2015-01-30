@@ -1,23 +1,21 @@
 package goskeleton
 
 import (
-	"reflect"
-	"github.com/codegangsta/inject"
-	"github.com/BurntSushi/toml"
-	"github.com/gin-gonic/gin"
 	"git.oschina.net/zuobao/gozuobao/logger"
+	"github.com/BurntSushi/toml"
+	"github.com/codegangsta/inject"
+	"github.com/gin-gonic/gin"
+	"reflect"
 )
-
 
 type Engine struct {
 	*gin.Engine
 	Injector inject.Injector
 }
 
-
 func isStruct(t reflect.Type) bool {
 	for t != nil {
-		switch t.Kind()  {
+		switch t.Kind() {
 		case reflect.Struct:
 			return true
 		case reflect.Ptr:
@@ -32,7 +30,7 @@ func isStruct(t reflect.Type) bool {
 }
 
 // 递归注入
-func recursiveInject(injector inject.Injector, value interface {}) error {
+func recursiveInject(injector inject.Injector, value interface{}) error {
 
 	var err error
 	err = injector.Apply(value)
@@ -42,7 +40,6 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 	}
 
 	v := reflect.ValueOf(value)
-
 
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -62,7 +59,7 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 		// 指针类型，或有注入标记的，不再处理
 		if f.Kind() == reflect.Ptr && structField.Tag == "inject" {
 			continue
-		} else if f.CanSet() && isStruct(structField.Type){
+		} else if f.CanSet() && isStruct(structField.Type) {
 
 			err = recursiveInject(injector, f.Addr().Interface())
 
@@ -75,13 +72,24 @@ func recursiveInject(injector inject.Injector, value interface {}) error {
 	return err
 }
 
-
 type ContextPostLoad interface {
- 	PostLoad()
+	PostLoad()
+}
+type ObjectInit interface {
+	Init()
 }
 
+func callInitObject(v reflect.Value) {
+	i := v.Interface()
+	if i != nil {
+		objectInitI, ok := i.(ObjectInit)
+		if ok {
+			objectInitI.Init()
+		}
+	}
+}
 
-func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath string) error  {
+func LoadDataFromFile(injector inject.Injector, data interface{}, ctxFilePath string) error {
 
 	_, err := toml.DecodeFile(ctxFilePath, data)
 	if err != nil {
@@ -96,7 +104,6 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 	ctxValue := reflect.ValueOf(data)
 	ctxType := reflect.TypeOf(data)
 
-
 	for ctxValue.Kind() == reflect.Ptr {
 		ctxValue = ctxValue.Elem()
 	}
@@ -106,20 +113,20 @@ func LoadDataFromFile(injector inject.Injector, data interface {}, ctxFilePath s
 	}
 
 	if ctxValue.Kind() == reflect.Struct {
-		for fieldIndex:=0; fieldIndex < ctxValue.NumField(); fieldIndex++ {
+		for fieldIndex := 0; fieldIndex < ctxValue.NumField(); fieldIndex++ {
 			fieldValue := ctxValue.Field(fieldIndex)
 			fieldType := fieldValue.Type()
 
-			if isStruct(fieldType)   {
+			if isStruct(fieldType) {
+				callInitObject(fieldValue)
 				injector.Map(fieldValue.Interface())
 			} else if fieldType.Kind() == reflect.Interface {
+				callInitObject(fieldValue)
 				t := ctxType.Field(fieldIndex).Type
 				injector.Set(t, fieldValue)
 			}
 		}
 	}
-
-
 
 	//
 	//	递归注入
