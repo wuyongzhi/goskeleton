@@ -94,8 +94,16 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func
 	}
 }
 
+var RecordHttp bool
+
 // 用于记录HTTP 请求/响应内容，以便于开发调试
 func RecordHttpHandler(c *gin.Context) {
+
+	if !RecordHttp {
+		c.Next()
+		return
+	}
+
 	wrapper := &responseWriter{
 		recorder: httptest.NewRecorder(),
 	}
