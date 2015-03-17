@@ -38,6 +38,42 @@ func injectorHandler(globalInjector inject.Injector) func(*gin.Context) {
 	}
 }
 
+func ParseFormHandler(formValue interface{}) func(c *gin.Context) {
+
+	return func(c *gin.Context) {
+		requestInjector := c.MustGet(CTX_KEY_REQUEST_INJECTOR)
+		if requestInjector != nil {
+
+			injector := requestInjector.(inject.Injector)
+			if injector != nil {
+
+				if formValue != nil {
+					newForm := reflect.New(reflect.TypeOf(formValue))
+					//					fmt.Println("newForm.Interface()", newForm.Interface())
+					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
+					newForm.Elem().Set(reflect.ValueOf(formValue))
+
+					if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
+						c.Request.ParseMultipartForm(2 << 20)
+						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
+					}
+
+					if c.Bind(newForm.Interface()) {
+						fmt.Println("c.Bind succeed:", newForm.Interface())
+
+						injector.Map(newForm.Elem().Interface())
+					} else {
+						log.Println("c.Bind failed")
+					}
+				}
+			}
+		}
+
+		c.Next()
+	}
+
+}
+
 // 生成一个处理器，用于调用我们的自定义处理器
 func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func(c *gin.Context) {
 
@@ -57,15 +93,19 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func
 			if injector != nil {
 
 				if formValue != nil {
-					newForm := reflect.New(reflect.TypeOf(formValue))
-					//					fmt.Println("newForm.Interface()", newForm.Interface())
-					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
-					newForm.Elem().Set(reflect.ValueOf(formValue))
 
 					if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
 						c.Request.ParseMultipartForm(2 << 20)
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
+
+					
+					newForm := reflect.New(reflect.TypeOf(formValue))
+					//					fmt.Println("newForm.Interface()", newForm.Interface())
+					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
+					newForm.Elem().Set(reflect.ValueOf(formValue))
+					
+					
 
 					if c.Bind(newForm.Interface()) {
 						//						fmt.Println("c.Bind succeed")
@@ -189,4 +229,86 @@ func RecordHttpHandler(c *gin.Context) {
 		fmt.Println(buf.String())
 	}
 
+}
+
+type Middlwares struct {
+	handlers []gin.HandlerFunc
+}
+
+func NewMiddlwares(handlers ...gin.HandlerFunc) *Middlwares {
+	return &Middlwares{
+		handlers: handlers,
+	}
+}
+
+func (me *Middlwares) BindForm(formValue interface{}) *Middlwares {
+	bindHandler := func(c *gin.Context) {
+		requestInjector := c.MustGet(CTX_KEY_REQUEST_INJECTOR)
+		if requestInjector != nil {
+
+			injector := requestInjector.(inject.Injector)
+			if injector != nil {
+
+				if formValue != nil {
+					newForm := reflect.New(reflect.TypeOf(formValue))
+					newForm.Elem().Set(reflect.ValueOf(formValue))
+
+					if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
+						c.Request.ParseMultipartForm(2 << 20)
+						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
+					}
+
+					if c.Bind(newForm.Interface()) {
+						fmt.Println("c.Bind succeed:", newForm.Interface())
+
+						injector.Map(newForm.Elem().Interface())
+					} else {
+						log.Println("c.Bind failed")
+					}
+				}
+			}
+		}
+
+		c.Next()
+	}
+
+	me.handlers = append(me.handlers, bindHandler)
+
+	return me
+}
+
+
+func (me *Middlwares) Bind(formValue interface{}) *Middlwares {
+	bindHandler := func(c *gin.Context) {
+		requestInjector := c.MustGet(CTX_KEY_REQUEST_INJECTOR)
+		if requestInjector != nil {
+
+			injector := requestInjector.(inject.Injector)
+			if injector != nil {
+
+				if formValue != nil {
+					newForm := reflect.New(reflect.TypeOf(formValue))
+					newForm.Elem().Set(reflect.ValueOf(formValue))
+
+					if strings.HasPrefix(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
+						c.Request.ParseMultipartForm(2 << 20)
+						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
+					}
+
+					if c.Bind(newForm.Interface()) {
+						fmt.Println("c.Bind succeed:", newForm.Interface())
+
+						injector.Map(newForm.Elem().Interface())
+					} else {
+						log.Println("c.Bind failed")
+					}
+				}
+			}
+		}
+
+		c.Next()
+	}
+	me.handlers = append(me.handlers, bindHandler)
+
+	return me
 }
