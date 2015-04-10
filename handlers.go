@@ -99,13 +99,10 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					
 					newForm := reflect.New(reflect.TypeOf(formValue))
 					//					fmt.Println("newForm.Interface()", newForm.Interface())
 					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
 					newForm.Elem().Set(reflect.ValueOf(formValue))
-					
-					
 
 					if c.Bind(newForm.Interface()) {
 						//						fmt.Println("c.Bind succeed")
@@ -160,8 +157,8 @@ func RecordHttpHandler(c *gin.Context) {
 	contentType := wrapper.ResponseWriter.Header().Get("Content-Type")
 	contentType = strings.ToLower(contentType)
 
-	if strings.HasPrefix(contentType, "text") ||
-		strings.Contains(contentType, "javascript") ||
+	if //strings.HasPrefix(contentType, "text") ||
+	strings.Contains(contentType, "javascript") ||
 		strings.Contains(contentType, "json") {
 
 		req := c.Request
@@ -276,7 +273,6 @@ func (me *Middlwares) BindForm(formValue interface{}) *Middlwares {
 
 	return me
 }
-
 
 func (me *Middlwares) Bind(formValue interface{}) *Middlwares {
 	bindHandler := func(c *gin.Context) {

@@ -93,6 +93,7 @@ func LoadDataFromFile(injector inject.Injector, data interface{}, ctxFilePath st
 
 	_, err := toml.DecodeFile(ctxFilePath, data)
 	if err != nil {
+		logger.Errorln(err)
 		return err
 	}
 
@@ -117,11 +118,16 @@ func LoadDataFromFile(injector inject.Injector, data interface{}, ctxFilePath st
 			fieldValue := ctxValue.Field(fieldIndex)
 			fieldType := fieldValue.Type()
 
+//			log.Println(ctxType.Field(fieldIndex).Type)
+
 			if isStruct(fieldType) {
 				callInitObject(fieldValue)
 				injector.Map(fieldValue.Interface())
 			} else if fieldType.Kind() == reflect.Interface {
 				callInitObject(fieldValue)
+				t := ctxType.Field(fieldIndex).Type
+				injector.Set(t, fieldValue)
+			} else if fieldType.Kind() == reflect.Array || fieldType.Kind() == reflect.Slice {
 				t := ctxType.Field(fieldIndex).Type
 				injector.Set(t, fieldValue)
 			}
