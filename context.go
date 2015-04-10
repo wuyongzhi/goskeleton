@@ -118,7 +118,7 @@ func LoadDataFromFile(injector inject.Injector, data interface{}, ctxFilePath st
 			fieldValue := ctxValue.Field(fieldIndex)
 			fieldType := fieldValue.Type()
 
-//			log.Println(ctxType.Field(fieldIndex).Type)
+			//			log.Println(ctxType.Field(fieldIndex).Type)
 
 			if isStruct(fieldType) {
 				callInitObject(fieldValue)
@@ -127,7 +127,9 @@ func LoadDataFromFile(injector inject.Injector, data interface{}, ctxFilePath st
 				callInitObject(fieldValue)
 				t := ctxType.Field(fieldIndex).Type
 				injector.Set(t, fieldValue)
-			} else if fieldType.Kind() == reflect.Array || fieldType.Kind() == reflect.Slice {
+			} else if fieldType.Kind() == reflect.Array ||
+				fieldType.Kind() == reflect.Slice ||
+				fieldType.Kind() == reflect.Map {
 				t := ctxType.Field(fieldIndex).Type
 				injector.Set(t, fieldValue)
 			}
