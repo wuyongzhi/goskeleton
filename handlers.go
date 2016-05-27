@@ -58,13 +58,10 @@ func ParseFormHandler(formValue interface{}) func(c *gin.Context) {
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					if c.Bind(newForm.Interface()) {
-						fmt.Println("c.Bind succeed:", newForm.Interface())
-
-						injector.Map(newForm.Elem().Interface())
-					} else {
+					if !c.Bind(newForm.Interface()) {
 						log.Println("c.Bind failed")
 					}
+					injector.Map(newForm.Elem().Interface())
 				}
 			}
 		}
@@ -104,14 +101,10 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func
 					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
 					newForm.Elem().Set(reflect.ValueOf(formValue))
 
-					if c.Bind(newForm.Interface()) {
-						//						fmt.Println("c.Bind succeed")
-
-						injector.Map(newForm.Elem().Interface())
-					} else {
+					if !c.Bind(newForm.Interface()) {
 						log.Println("c.Bind failed")
 					}
-
+					injector.Map(newForm.Elem().Interface())
 				}
 
 				returnValues, err := injector.Invoke(customHandler)
@@ -291,13 +284,11 @@ func (me *Middlwares) Bind(formValue interface{}) *Middlwares {
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					if c.Bind(newForm.Interface()) {
-						fmt.Println("c.Bind succeed:", newForm.Interface())
-
-						injector.Map(newForm.Elem().Interface())
-					} else {
+					if !c.Bind(newForm.Interface()) {
 						log.Println("c.Bind failed")
 					}
+
+					injector.Map(newForm.Elem().Interface())
 				}
 			}
 		}
