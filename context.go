@@ -1,7 +1,7 @@
 package goskeleton
 
 import (
-	"git.oschina.net/zuobao/gozuobao/logger"
+	"github.com/zuobao/gozuobao/logger"
 	"github.com/BurntSushi/toml"
 	"github.com/codegangsta/inject"
 	"github.com/gin-gonic/gin"
