@@ -17,8 +17,8 @@ const (
 
 func GetInjector(c *gin.Context) inject.Injector {
 	var injector inject.Injector
-	requestInjector, err := c.Get(CTX_KEY_REQUEST_INJECTOR)
-	if err == nil && requestInjector != nil {
+	requestInjector, existed := c.Get(CTX_KEY_REQUEST_INJECTOR)
+	if existed && requestInjector != nil {
 		injector = requestInjector.(inject.Injector)
 	}
 	return injector
@@ -58,7 +58,7 @@ func ParseFormHandler(formValue interface{}) func(c *gin.Context) {
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					if !c.Bind(newForm.Interface()) {
+					if c.Bind(newForm.Interface()) != nil {
 						log.Println("c.Bind failed")
 					}
 					injector.Map(newForm.Elem().Interface())
@@ -101,7 +101,7 @@ func wrapperCustomHandler(customHandler interface{}, formValue interface{}) func
 					//					fmt.Println("newForm.Addr().Interface()", newForm.Addr().Interface())
 					newForm.Elem().Set(reflect.ValueOf(formValue))
 
-					if !c.Bind(newForm.Interface()) {
+					if c.Bind(newForm.Interface()) != nil {
 						log.Println("c.Bind failed")
 					}
 					injector.Map(newForm.Elem().Interface())
@@ -248,7 +248,7 @@ func (me *Middlwares) BindForm(formValue interface{}) *Middlwares {
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					if c.Bind(newForm.Interface()) {
+					if c.Bind(newForm.Interface()) == nil {
 						fmt.Println("c.Bind succeed:", newForm.Interface())
 
 						injector.Map(newForm.Elem().Interface())
@@ -284,7 +284,7 @@ func (me *Middlwares) Bind(formValue interface{}) *Middlwares {
 						c.Request.Header.Set("Content-Type", gin.MIMEPOSTForm)
 					}
 
-					if !c.Bind(newForm.Interface()) {
+					if c.Bind(newForm.Interface()) != nil {
 						log.Println("c.Bind failed")
 					}
 
